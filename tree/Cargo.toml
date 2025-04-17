@@ -11,7 +11,12 @@ serde           = { version = "1.0", features = ["derive"] }
 serde_json      = "1.0"
 uuid            = { version = "1", features = ["v4"] }
 sha2            = "0.10"
-sqlx            = { version = "0.7", features = ["postgres", "runtime-tokio-rustls", "uuid", "macros"] }
+mongodb         = { version = "2", default-features = false, features = ["tokio-runtime"] }
+bson            = "2"               # for ObjectId helpers
 dotenvy         = "0.15"
-# pdf extraction helper (pure‑Rust).  Pick another crate if you prefer.
-lopdf           = "0.32"
+lopdf           = "0.32"            # (PDF text extractor)
+anyhow          = "1"
+futures-util = "0.3"        # StreamExt
+bytes        = "1"          # already pulled by Actix but listed for clarity
+
+
