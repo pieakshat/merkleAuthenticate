@@ -68,7 +68,7 @@ pub mod coreFunctions {
                 let right = if i + 1 < leaves.len() {
                     leaves[i + 1].clone()
                 } else {
-                    left.clone() // Duplicate if odd number of leaves
+                    left.clone() // Duplicate if odd 
                 };
 
                 let parent_hash = concat_hash(&left.hash, &right.hash);
@@ -135,18 +135,18 @@ fn main() {
         "data4".to_string(),
     ];
 
-    // Build the Merkle tree
+    
     let root = build_merkle_tree(data.clone());
     println!("Root hash: {}", root.hash);
 
-    // Generate proof for "data3"
+    
     let target_data = "data3";
     let target_hash = generate_hash(target_data);
     let proof = generate_proof(&root, &target_hash);
 
     println!("Proof for '{}': {:?}", target_data, proof);
 
-    // Verify the proof
+    
     let is_valid = verify_proof(&root.hash, &target_hash, proof);
     println!(
         "Is '{}' part of the Merkle tree? {}",

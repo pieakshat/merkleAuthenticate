@@ -1,5 +1,6 @@
 mod coreFunctions;
+use crate::coreFunctions::coreFunctions::test;
 
 fn main() {
-    coreFunctions::test(); 
+    test(); 
 }
