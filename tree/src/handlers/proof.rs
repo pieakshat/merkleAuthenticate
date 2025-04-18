@@ -1,13 +1,13 @@
 use actix_web::{web, HttpResponse, Responder};
-use futures_util::StreamExt;                       // brings `next()`
+use futures_util::StreamExt;
 use mongodb::{bson::{doc, Document}, Database};
 use serde::Serialize;
 
 #[derive(Serialize)]
 struct ProofResponse {
-    page_hash:  String,             // single‑hash of page text (for client)
+    page_hash:  String,                 // single hash
     root_hash:  String,
-    proof:      Vec<(String, String)>,
+    proof:      Vec<(String, String)>,  // bottom‑up sibling list
     page_index: usize,
 }
 
@@ -24,7 +24,7 @@ async fn generate_proof_route(
 ) -> impl Responder {
     let (doc_id, page_idx) = path.into_inner();
 
-    // ─── 1. fetch metadata ────────────────────────────────────────────────
+    // ── 1. document metadata ─────────────────────────────────────────────
     let docs_coll = db.collection::<Document>("documents");
     let doc_meta = match docs_coll
         .find_one(doc! { "_id": &doc_id }, None)
@@ -42,7 +42,7 @@ async fn generate_proof_route(
             .body(format!("page index out of range (0‥{})", n_pages - 1));
     }
 
-    // ─── 2. load page hashes in order ─────────────────────────────────────
+    // ── 2. load every page_hash in its slot ──────────────────────────────
     let pages_coll = db.collection::<Document>("pages");
     let mut cursor = pages_coll
         .find(doc! { "document_id": &doc_id }, None)
@@ -50,33 +50,24 @@ async fn generate_proof_route(
         .unwrap();
 
     let mut page_hashes = vec![String::new(); n_pages as usize];
-    let mut target_single = String::new();           // single‑hash leaf
-
     while let Some(Ok(p)) = cursor.next().await {
         let idx = p.get_i32("page_index").unwrap() as usize;
-        let h   = p.get_str("page_hash").unwrap().to_owned();
-        page_hashes[idx] = h.clone();
-        if idx == page_idx {
-            target_single = h;
-        }
+        page_hashes[idx] = p.get_str("page_hash").unwrap().to_owned();
     }
+    let target_single = &page_hashes.clone()[page_idx];
 
-    // ─── 3. rebuild the *double‑hashed* tree (same as upload) ─────────────
+    // ── 3. single‑hash tree (same as upload) + proof ─────────────────────
     let root_node =
-        crate::merkle::coreFunctions::build_merkle_tree(page_hashes.clone());
-
-    // tree leaves are hash(page_hash) → compute that for the target
-    let target_double =
-        crate::merkle::coreFunctions::generate_hash(&page_hashes[page_idx]);
+        crate::merkle::coreFunctions::build_tree_from_hashes(page_hashes);
 
     let mut proof =
-        crate::merkle::coreFunctions::generate_proof(&root_node, &target_double);
+        crate::merkle::coreFunctions::generate_proof(&root_node, target_single);
 
-    proof.reverse();        // bottom up for the verifier 
+    proof.reverse();            // bottom‑up for verify_proof
 
-    // ─── 4. respond ───────────────────────────────────────────────────────
+    // ── 4. respond ───────────────────────────────────────────────────────
     HttpResponse::Ok().json(ProofResponse {
-        page_hash: target_single,   
+        page_hash:  target_single.clone(),
         root_hash,
         proof,
         page_index: page_idx,

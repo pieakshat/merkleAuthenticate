@@ -4,7 +4,7 @@ use futures_util::StreamExt;
 use mongodb::{bson::doc, Database};
 use uuid::Uuid;
 use crate::merkle::coreFunctions::generate_hash;
-use crate::merkle::coreFunctions::build_merkle_tree;
+use crate::merkle::coreFunctions::build_tree_from_hashes;
 
 pub fn register(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -58,7 +58,7 @@ async fn upload_document(
 
         println!("{:?}", page_hashes); 
 
-        let root = build_merkle_tree(page_hashes.clone());
+        let root = build_tree_from_hashes(page_hashes.clone());
 
     // 4) write to Mongo  (documents & pages collections)
     let docs_coll  = db.collection("documents");
