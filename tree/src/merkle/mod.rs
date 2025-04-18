@@ -84,6 +84,30 @@ pub mod coreFunctions {
         leaves[0].clone()
     }
 
+    // this is used to build the tree if we already have leaf hashes
+    pub fn build_tree_from_hashes(hashes: Vec<String>) -> Node {
+        if hashes.is_empty() {
+            panic!("no hashes");
+        }
+        let mut leaves: Vec<Node> = hashes.into_iter().map(Node::new).collect();
+    
+        while leaves.len() > 1 {
+            let mut next = Vec::new();
+            for i in (0..leaves.len()).step_by(2) {
+                let left  = leaves[i].clone();
+                let right = if i + 1 < leaves.len() { leaves[i + 1].clone() } else { left.clone() };
+                let parent_hash = concat_hash(&left.hash, &right.hash);
+                let mut parent  = Node::new(parent_hash);
+                parent.left  = Some(Box::new(left));
+                parent.right = Some(Box::new(right));
+                next.push(parent);
+            }
+            leaves = next;
+        }
+        leaves[0].clone()
+    }
+    
+
     pub fn generate_proof(root: &Node, target_hash: &str) -> Vec<(String, String)> {
         let mut proof = Vec::new();
         let mut queue: VecDeque<(Node, Vec<(String, String)>)> = VecDeque::new();

@@ -54,6 +54,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(db.clone()))
             .configure(handlers::documents::register)         // POST /documents
+            .configure(handlers::proof::register)
             .route("/",       web::get().to(index))           // GET /
             .route("/db-check", web::get().to(db_check))      // GET /db-check
     })
