@@ -150,7 +150,8 @@ pub mod coreFunctions {
                 concat_hash(&current_hash, &hash)
             };
         }
-
+        println!("{}", root_hash); 
+        println!("{}", current_hash); 
         current_hash == root_hash
     }
 
