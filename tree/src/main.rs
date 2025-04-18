@@ -1,5 +1,4 @@
-// ------ crate structure ------
-mod db {                 // src/db/mongo.rs
+mod db {                 
     pub mod mongo;
 }
 mod handlers; 
@@ -11,8 +10,7 @@ use dotenvy::dotenv;
 use mongodb::bson::doc;
 use std::env;
 
-// ────────────────────────────────────────────
-// Basic index route
+
 async fn index() -> impl Responder {
     "OK"
 }
@@ -30,7 +28,7 @@ async fn db_check(db: web::Data<mongodb::Database>) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    dotenv().ok(); // read .env
+    dotenv().ok(); 
 
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".into());
     let port: u16 = env::var("PORT")
@@ -38,12 +36,12 @@ async fn main() -> std::io::Result<()> {
         .parse()
         .expect("PORT must be a number");
 
-    // connect to Mongo (your db::mongo::init())
+    
     let db = db::mongo::init()
         .await
         .expect("Could not connect to MongoDB");
 
-    // optional ping
+    
     db.run_command(doc! { "ping": 1 }, None)
         .await
         .expect("MongoDB ping failed");
@@ -51,7 +49,7 @@ async fn main() -> std::io::Result<()> {
     println!("Connected to MongoDB");
     println!("Server running on http://{host}:{port}");
 
-    // launch Actix
+    
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(db.clone()))

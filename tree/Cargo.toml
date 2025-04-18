@@ -18,5 +18,8 @@ lopdf           = "0.32"            # (PDF text extractor)
 anyhow          = "1"
 futures-util = "0.3"        # StreamExt
 bytes        = "1"          # already pulled by Actix but listed for clarity
+encoding_rs  = "0.8"
+pdf-extract = "0.8" 
+tempfile    = "3"
 
 
