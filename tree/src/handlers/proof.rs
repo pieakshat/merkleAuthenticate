@@ -63,7 +63,7 @@ async fn generate_proof_route(
     let mut proof =
         crate::merkle::coreFunctions::generate_proof(&root_node, target_single);
 
-    proof.reverse();            // bottom‑up for verify_proof
+    
 
     // ── 4. respond ───────────────────────────────────────────────────────
     HttpResponse::Ok().json(ProofResponse {

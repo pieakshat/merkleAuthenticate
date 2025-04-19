@@ -88,28 +88,51 @@ pub mod coreFunctions {
         let mut proof = Vec::new();
         let mut queue = VecDeque::new();
         queue.push_back((root.clone(), Vec::new()));
-
-        while let Some((node, mut path)) = queue.pop_front() {
-            if node.hash == target_hash {
-                proof = path;
-                break;
+    
+        while let Some((node, path)) = queue.pop_front() {
+            if let Some(ref left) = node.left {
+                if left.hash == target_hash {
+                    let mut new_path = path.clone();
+                    if let Some(ref right) = node.right {
+                        new_path.push((right.hash.clone(), "R".to_string()));
+                    }
+                    proof = new_path;
+                    break;
+                }
             }
-
+    
+            if let Some(ref right) = node.right {
+                if right.hash == target_hash {
+                    let mut new_path = path.clone();
+                    if let Some(ref left) = node.left {
+                        new_path.push((left.hash.clone(), "L".to_string()));
+                    }
+                    proof = new_path;
+                    break;
+                }
+            }
+    
             if let Some(ref left) = node.left {
                 let mut left_path = path.clone();
-                left_path.push((left.hash.clone(), "L".to_string()));
+                if let Some(ref right) = node.right {
+                    left_path.push((right.hash.clone(), "R".to_string()));
+                }
                 queue.push_back((*left.clone(), left_path));
             }
-
+    
             if let Some(ref right) = node.right {
                 let mut right_path = path.clone();
-                right_path.push((right.hash.clone(), "R".to_string()));
+                if let Some(ref left) = node.left {
+                    right_path.push((left.hash.clone(), "L".to_string()));
+                }
                 queue.push_back((*right.clone(), right_path));
             }
         }
-
+    
+        proof.reverse();
         proof
     }
+    
 
     pub fn verify_proof(root_hash: &str, target_hash: &str, proof: Vec<(String, String)>) -> bool {
         let mut current_hash = target_hash.to_string();
