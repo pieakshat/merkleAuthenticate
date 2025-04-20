@@ -48,7 +48,7 @@ async fn upload_document(
         return HttpResponse::BadRequest().body("no text extracted");
     }
 
-    // println!("{:?}", pages); 
+    println!("{:?}", pages); 
 
     // 3) hash each page, build Merkle root
     let page_hashes: Vec<String> = pages
@@ -56,7 +56,7 @@ async fn upload_document(
         .map(|txt| generate_hash(txt))
         .collect();
 
-        println!("{:?}", page_hashes); 
+        // println!("{:?}", page_hashes); 
 
         let root = build_tree_from_hashes(page_hashes.clone());
 

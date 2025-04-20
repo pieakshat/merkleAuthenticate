@@ -61,14 +61,14 @@ pub mod coreFunctions {
             .collect();
 
         while leaves.len() > 1 {
-            let mut next_level: Vec<Node> = Vec::new();
+            let mut next_level = Vec::new();
 
             for i in (0..leaves.len()).step_by(2) {
                 let left = leaves[i].clone();
                 let right = if i + 1 < leaves.len() {
                     leaves[i + 1].clone()
                 } else {
-                    left.clone() // Duplicate if odd 
+                    left.clone() // duplicate if odd number
                 };
 
                 let parent_hash = concat_hash(&left.hash, &right.hash);
@@ -84,29 +84,46 @@ pub mod coreFunctions {
         leaves[0].clone()
     }
 
+    // this is used to build the tree if we already have leaf hashes
+    pub fn build_tree_from_hashes(hashes: Vec<String>) -> Node {
+        if hashes.is_empty() {
+            panic!("no hashes");
+        }
+        let mut leaves: Vec<Node> = hashes.into_iter().map(Node::new).collect();
+    
+        while leaves.len() > 1 {
+            let mut next = Vec::new();
+            for i in (0..leaves.len()).step_by(2) {
+                let left  = leaves[i].clone();
+                let right = if i + 1 < leaves.len() { leaves[i + 1].clone() } else { left.clone() };
+                let parent_hash = concat_hash(&left.hash, &right.hash);
+                let mut parent  = Node::new(parent_hash);
+                parent.left  = Some(Box::new(left));
+                parent.right = Some(Box::new(right));
+                next.push(parent);
+            }
+            leaves = next;
+        }
+        leaves[0].clone()
+    }
+    
+
     pub fn generate_proof(root: &Node, target_hash: &str) -> Vec<(String, String)> {
         let mut proof = Vec::new();
         let mut queue = VecDeque::new();
         queue.push_back((root.clone(), Vec::new()));
     
         while let Some((node, path)) = queue.pop_front() {
-            if let Some(ref left) = node.left {
+            // if target is left
+            if let (Some(ref left), Some(ref right)) = (&node.left, &node.right) {
                 if left.hash == target_hash {
                     let mut new_path = path.clone();
-                    if let Some(ref right) = node.right {
-                        new_path.push((right.hash.clone(), "R".to_string()));
-                    }
+                    new_path.push((right.hash.clone(), "R".to_string()));
                     proof = new_path;
                     break;
-                }
-            }
-    
-            if let Some(ref right) = node.right {
-                if right.hash == target_hash {
+                } else if right.hash == target_hash {
                     let mut new_path = path.clone();
-                    if let Some(ref left) = node.left {
-                        new_path.push((left.hash.clone(), "L".to_string()));
-                    }
+                    new_path.push((left.hash.clone(), "L".to_string()));
                     proof = new_path;
                     break;
                 }
@@ -117,7 +134,7 @@ pub mod coreFunctions {
                 if let Some(ref right) = node.right {
                     left_path.push((right.hash.clone(), "R".to_string()));
                 }
-                queue.push_back((*left.clone(), left_path));
+                queue.push_back(((*left).as_ref().clone(), left_path));
             }
     
             if let Some(ref right) = node.right {
@@ -125,13 +142,14 @@ pub mod coreFunctions {
                 if let Some(ref left) = node.left {
                     right_path.push((left.hash.clone(), "L".to_string()));
                 }
-                queue.push_back((*right.clone(), right_path));
+                queue.push_back(((*right).as_ref().clone(), right_path));
             }
         }
     
         proof.reverse();
         proof
     }
+    
     
 
     pub fn verify_proof(root_hash: &str, target_hash: &str, proof: Vec<(String, String)>) -> bool {
@@ -143,36 +161,32 @@ pub mod coreFunctions {
                 concat_hash(&current_hash, &hash)
             };
         }
-
+        println!("{}", root_hash); 
+        println!("{}", current_hash); 
         current_hash == root_hash
     }
-}
 
-use coreFunctions::*;
+    pub fn test() {
+        let data = vec![
+            "data1".to_string(),
+            "data2".to_string(),
+            "data3".to_string(),
+            "data4".to_string(),
+        ];
 
-fn main() {
-    let data = vec![
-        "data1".to_string(),
-        "data2".to_string(),
-        "data3".to_string(),
-        "data4".to_string(),
-    ];
+        let root = build_merkle_tree(data.clone());
+        println!("Root hash: {}", root.hash);
 
-    
-    let root = build_merkle_tree(data.clone());
-    println!("Root hash: {}", root.hash);
+        let target_data = "data3";
+        let target_hash = generate_hash(target_data);
+        let proof = generate_proof(&root, &target_hash);
 
-    
-    let target_data = "data3";
-    let target_hash = generate_hash(target_data);
-    let proof = generate_proof(&root, &target_hash);
+        println!("Proof for '{}': {:?}", target_data, proof);
 
-    println!("Proof for '{}': {:?}", target_data, proof);
-
-    
-    let is_valid = verify_proof(&root.hash, &target_hash, proof);
-    println!(
-        "Is '{}' part of the Merkle tree? {}",
-        target_data, is_valid
-    );
+        let is_valid = verify_proof(&root.hash, &target_hash, proof);
+        println!(
+            "Is '{}' part of the Merkle tree? {}",
+            target_data, is_valid
+        );
+    }
 }
