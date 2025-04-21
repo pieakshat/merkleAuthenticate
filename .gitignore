@@ -1,3 +1,6 @@
+# =====================
+# Rust/Cargo ignores
+# =====================
 # Ignore the entire target directory (build artifacts)
 target/
 
@@ -10,42 +13,72 @@ build/
 # Ignore Rust/Cargo temporary files
 *.rs.bk
 
-# Ignore IDE/editor-specific files
+# Ignore Rust analyzer files
+rust-project.json
+
+# =====================
+# Next.js / Node.js ignores
+# =====================
+# Logs
+logs
+*.log
+
+# Dependency directories
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Production build output
+dist/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Next.js cache
+.nyc_output/
+coverage/
+.next/cache/
+
+# IDE/editor-specific files
 .idea/
 .vscode/
 *.iml
 
-# Ignore backup and swap files
+# Backup and swap files
 *.swp
 *.swo
 *.bak
 *.tmp
 
-# Ignore dependencies directory (if using local dependencies)
+# Local dependencies (if any)
 vendor/
 
-# Ignore debugging and profiling files
+# Debugging and profiling files
 *.profdata
 *.dSYM/
 *.gcda
 *.gcno
 *.cov
 
-# Ignore compiled binaries
+# Compiled binaries
 *.exe
 *.out
 *.app
 
-# Ignore Rust analyzer files
-rust-project.json
-
-# Ignore logs and database files
-*.log
-*.db
-
-# Ignore other OS-specific files
+# OS-specific files
 .DS_Store
 Thumbs.db
 
-# Ignore Git-specific files
-.git/
+# Git-specific files

@@ -48,7 +48,7 @@ async fn upload_document(
         return HttpResponse::BadRequest().body("no text extracted");
     }
 
-    println!("{:?}", pages); 
+    // println!("{:?}", pages); 
 
     // 3) hash each page, build Merkle root
     let page_hashes: Vec<String> = pages
