@@ -41,6 +41,7 @@ export default function UploadForm() {
 
     try {
       const result = await uploadDocument(file)
+      console.log(result);
       setUploadResult(result)
     } catch (err: any) {
       setError(err.message || "Failed to upload document")
@@ -50,8 +51,10 @@ export default function UploadForm() {
   }
 
   const handleGenerateProof = () => {
-    if (uploadResult?.documentId) {
-      router.push(`/generate-proof?docId=${uploadResult.documentId}`)
+    if (uploadResult?.document_id) {
+      router.push(`/generate-proof?docId=${uploadResult.document_id}`)
+    } else {
+      return Error("Document Id can't be fetched");
     }
   }
 
@@ -108,23 +111,23 @@ export default function UploadForm() {
           <div className="space-y-2 text-sm">
             <div className="grid grid-cols-3 gap-2">
               <span className="font-medium text-gray-500">Document ID:</span>
-              <span className="col-span-2 font-mono">{uploadResult.documentId}</span>
+              <span className="col-span-2 font-mono">{uploadResult.document_id}</span>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               <span className="font-medium text-gray-500">Root Hash:</span>
-              <span className="col-span-2 break-all font-mono text-xs">{uploadResult.rootHash}</span>
+              <span className="col-span-2 break-all font-mono text-xs">{uploadResult.root_hash}</span>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               <span className="font-medium text-gray-500">Pages:</span>
-              <span className="col-span-2">{uploadResult.pageCount}</span>
+              <span className="col-span-2">{uploadResult.n_pages}</span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            {/* <div className="grid grid-cols-3 gap-2">
               <span className="font-medium text-gray-500">Timestamp:</span>
               <span className="col-span-2">{new Date(uploadResult.timestamp).toLocaleString()}</span>
-            </div>
+            </div> */}
           </div>
 
           <Button onClick={handleGenerateProof} className="mt-4 w-full bg-emerald-600 hover:bg-emerald-700">

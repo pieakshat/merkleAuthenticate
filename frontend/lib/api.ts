@@ -10,6 +10,7 @@ export async function uploadDocument(file: File): Promise<any> {
   formData.append("file", file)
 
   try {
+    // console.log("Hey");
     const response = await fetch("http://127.0.0.1:8080/documents", {
       method: "POST",
       body: formData,
@@ -19,6 +20,7 @@ export async function uploadDocument(file: File): Promise<any> {
       const errorText = await response.text()
       throw new Error(`Upload failed: ${errorText || response.statusText}`)
     }
+
 
     return await response.json()
   } catch (error) {
@@ -63,17 +65,17 @@ export async function verifyProof(proofData: any): Promise<any> {
       },
       body: JSON.stringify(proofData),
     })
-
+    // console.log("ree", response);
     if (!response.ok) {
       const errorText = await response.text()
       throw new Error(`Verification failed: ${errorText || response.statusText}`)
     }
 
     const result = await response.json()
-
+    // console.log(result);
     // Assuming the API returns a boolean or an object with a verified property
     return {
-      verified: typeof result === "boolean" ? result : result.verified,
+      verified: result,
       details: proofData,
     }
   } catch (error) {

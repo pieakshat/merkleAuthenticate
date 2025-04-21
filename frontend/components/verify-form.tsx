@@ -50,7 +50,10 @@ export default function VerifyForm() {
         throw new Error("Invalid JSON file")
       }
 
+      // console.log(proofData);
+
       const result = await verifyProof(proofData)
+      console.log(result);
       setVerificationResult(result.verified)
       setProofDetails(result.details)
     } catch (err: any) {
@@ -123,24 +126,24 @@ export default function VerifyForm() {
 
           {proofDetails && (
             <div className="space-y-2 text-sm">
-              <div className="grid grid-cols-3 gap-2">
+              {/* <div className="grid grid-cols-3 gap-2">
                 <span className="font-medium text-gray-500">Document ID:</span>
-                <span className="col-span-2 font-mono">{proofDetails.documentId}</span>
-              </div>
+                <span className="col-span-2 font-mono">{proofDetails.document_id}</span>
+              </div> */}
 
               <div className="grid grid-cols-3 gap-2">
                 <span className="font-medium text-gray-500">Page Number:</span>
-                <span className="col-span-2">{proofDetails.pageNumber}</span>
+                <span className="col-span-2">{proofDetails.page_index}</span>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <span className="font-medium text-gray-500">Page Hash:</span>
-                <span className="col-span-2 break-all font-mono text-xs">{proofDetails.pageHash}</span>
+                <span className="col-span-2 break-all font-mono text-xs">{proofDetails.page_hash}</span>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <span className="font-medium text-gray-500">Root Hash:</span>
-                <span className="col-span-2 break-all font-mono text-xs">{proofDetails.rootHash}</span>
+                <span className="col-span-2 break-all font-mono text-xs">{proofDetails.root_hash}</span>
               </div>
             </div>
           )}
