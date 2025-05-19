@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { FileText, FileCheck, Shield } from "lucide-react"
+import { Wallet } from '@coinbase/onchainkit/wallet';
 
 export default function Navigation() {
   const pathname = usePathname()
@@ -30,19 +31,21 @@ export default function Navigation() {
               const Icon = item.icon
 
               return (
+
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive ? "bg-emerald-50 text-emerald-700" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
+                  className={`flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors ${isActive ? "bg-emerald-50 text-emerald-700" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    }`}
                 >
                   <Icon className="mr-2 h-5 w-5" />
                   <span className="hidden md:inline">{item.name}</span>
                 </Link>
+
               )
             })}
           </nav>
+          <Wallet />
         </div>
       </div>
     </header>
