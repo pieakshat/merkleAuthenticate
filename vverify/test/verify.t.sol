@@ -63,7 +63,7 @@ contract TestDocument is Test {
             v, r, s
         );
 
-        (address owner) = verify.docs(root);
+        (address owner, uint256 timestamp) = verify.docs(root);
         assertEq(owner, user, "owner should be the signing user");
 
         /* nonce should be incremented */
@@ -73,7 +73,8 @@ contract TestDocument is Test {
     function testVerificationFunction() external {
         // anchoring the doc first 
 
-        bytes32 root = keccak256("myDocRoot"); 
+        bytes32 root = hex"0de519f6c4963b0fd4180f5b06166b7fa80385d62078271fb5f56cecade01d58"; // actual rootHash of a document 
+        bytes32 leaf = hex"3298e6953e054f53f8550d2aaa605daf8cc74233cae089a7147e39e9fcd0251d"; // hash of the page to be verified
         uint256 deadline = block.timestamp + 1 hours; 
         uint256 nonce = verify.nonces(user); 
 
@@ -102,5 +103,29 @@ contract TestDocument is Test {
             deadline,
             v, r, s
         );
+        vm.stopPrank();
+        // document is anchored now 
+
+        bytes32[] memory proof = new bytes32[](3);
+        bool[] memory isLeft = new bool[](3);
+
+
+        // preparing the merkle data for proof verification 
+        proof[0] = hex"81be84384d2fb7d1807f18befe971feb62a93e8e40d41c8f13482b3765c58110";
+        isLeft[0] = true;
+
+        proof[1] = hex"6534e41f3385290ae9ecffda95c47169029a1d77267ee16a4f4f3798171893f1";
+        isLeft[1] = false;
+
+        proof[2] = hex"5c4185cb85f50c9a496d2e43b32ae1ef99563cf13bba663650b9644a5b0f2f7b";
+        isLeft[2] = false;
+
+        proof[3] = hex"dfbd3165b0f71936321f13cf4fefe014a8227b19a543089e457afcecc1e5a673";
+        isLeft[3] = false;
+
+        bool ok = verify.verify(root, leaf, proof, isLeft);
+        assertTrue(ok, "Merkle proof verification failed");
+
+
     }
 }
