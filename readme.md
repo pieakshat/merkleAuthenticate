@@ -1,137 +1,142 @@
-# 📄 MerkleDoc: Verifiable Document Proof System
+# 📄 MerkleDoc — On‑Chain Verifiable Document Proofs
 
-MerkleDoc is a full-stack Rust + Next.js application that enables users to **prove the authenticity of any page in a document** using Merkle trees.
+MerkleDoc is a **Rust + Next.js + Solidity** stack that lets anyone prove the authenticity of any page in a document *and* publicly timestamp ownership on an EVM chain.
 
-When a user uploads a PDF, the backend extracts text from each page, hashes every page individually, and constructs a Merkle tree from those hashes. The **Merkle root** and all **page hashes** are stored in MongoDB.
+![architecture](./arch.png)
 
-Anyone can then generate a cryptographic proof for a specific page and verify that it was part of the original document—without needing access to the entire file.
-
----
-
-## 🌳 Why Merkle Trees?
-
-Merkle trees allow you to **prove the inclusion of a data element (like a page)** in a larger dataset (the entire document) without revealing the full dataset.
-
-### ✨ Real-world Use Cases
-
-- Verifying individual **clauses in legal contracts**
-- Ensuring **page integrity** in digital publications
-- Authenticating **partial excerpts** from academic papers
-- Proof of inclusion for **off-chain document storage systems**
+* **Off‑chain:** Each page is SHA‑256‑hashed and inserted into a Merkle tree; the root and every page hash are stored in MongoDB for fast queries.
+* **On‑chain:** The Merkle root is **anchored** in the `Verify` smart‑contract together with the owner’s address and a timestamp, providing an immutable proof of existence and ownership.
+* **Hybrid verification:** Anyone can (a) fetch a Merkle proof from the API and verify locally *or* (b) call `Verify.verify(...)` on‑chain for trust‑minimised validation.
 
 ---
 
-### 🧠 How It Works
+## 🌳 Why Merkle Trees **and** Ethereum?
 
-1. 📝 You upload a PDF.
-2. 📄 Each page is hashed using SHA-256.
-3. 🌲 A Merkle tree is built using these page hashes.
-4. 💾 The Merkle root and page hashes are saved in MongoDB.
-5. 📜 You can now:
-   - Generate a **Merkle proof** for any page.
-   - Verify the page's authenticity using the proof and the Merkle root.
+Merkle trees give inclusion proofs; anchoring the root on‑chain adds:
 
----
-
-## 🛠 How to Run the Project
-
-This project is divided into:
-
-- `backend/` — Rust Actix Web server + MongoDB
-- `frontend/` — Next.js UI to interact with the backend
+| Benefit                   | Why it matters                                                           |
+| ------------------------- | ------------------------------------------------------------------------ |
+| **Public timestamp**      | Root is mined in a block — impossible to back‑date.                      |
+| **Ownership attestation** | Only the wallet that signs the EIP‑712 message can anchor.               |
+| **Composable proofs**     | Smart contracts / dApps can consume `Verify.verify(...)` as a primitive. |
 
 ---
 
-## 📦 1. Backend Setup (Rust)
+## ✨ End‑to‑End Flow
 
-### 🔧 Prerequisites
+1. **Upload PDF** → backend extracts text & hashes each page.
+2. **Merkle tree** is built → `root_hash` & `page_hashes[]` inserted into MongoDB.
+3. **Wallet signature (EIP‑712)** — the UI asks the uploader to sign the root.
+4. **Anchor on‑chain** — backend calls `Verify.anchorWithSig(...)` with the user’s signature.
+5. **Proof / Verify**
 
-- [Rust](https://www.rust-lang.org/tools/install) (latest stable)
-- [MongoDB](https://www.mongodb.com/try/download/community)
-- `cargo` (comes with Rust)
+   * `GET /documents/:id/proof/:page` → returns Merkle path.
+   * Off‑chain verify *or* call `Verify.verify(...)` on smart contract.
 
-### 📁 Navigate into the backend directory
+---
+
+## 🛠 Project Structure
+
+```
+merkle‑doc/
+├─ backend/      # Rust · Actix‑Web · MongoDB
+├─ contracts/    # Foundry (project for Verify.sol)
+├─ frontend/     # Next.js · wagmi · ethers
+└─ README.md
+```
+
+---
+
+## 📦 1. Backend (Rust)
 
 ```bash
+# prerequisites: Rust stable, MongoDB
 cd backend
-touch .env
-```
-
-Paste this content inside .env:
-
-```bash
-MONGODB_URI=
-MONGODB_NAME=merkle_docs
-HOST=127.0.0.1
-PORT=8080
-```
-run
-```bash
+cp .env.example .env  # fill MONGODB_URI
 cargo run
 ```
 
+The backend exposes the same REST API **plus** a new `/anchor` helper that relays the signed root to Ethereum.
 
-## Frontend Setup (next.js)
+---
 
-on another terminal
+## ⛓️ 2. Smart Contract (Foundry)
+
+`contracts/Verify.sol` (see below) anchors roots and verifies Merkle proofs.
+
+### Compile & Test
+
 ```bash
-cd frontend 
-npm install -g pnpm
+cd contracts
+forge build
+forge test
+```
+
+### Deploy
+
+```bash
+source .env            # RPC_URL, PRIVATE_KEY
+forge script script/DeployVerify.s.sol:DeployVerify \
+  --rpc-url $RPC_URL --broadcast --verify
+```
+
+Grab the emitted address and place it in **both**:
+
+* `frontend/.env.local` → `NEXT_PUBLIC_VERIFY_ADDRESS=`
+* `backend/.env`        → `VERIFY_ADDRESS=`
+
+### Contract ABI (excerpt)
+
+| Function                                                                                 | Purpose                                                                                |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `anchorWithSig(bytes32 root,address owner,uint256 deadline,uint8 v,bytes32 r,bytes32 s)` | Stores `root → (owner, timestamp)` if the EIP‑712 signature is valid and nonce unused. |
+| `verify(bytes32 root,bytes32 leaf,bytes32[] proof,bool[] isLeft)`                        | Pure Merkle‑path check; returns `bool`.                                                |
+
+---
+
+## 🖥 3. Frontend (Next.js + wagmi)
+
+```bash
+cd frontend
 pnpm install
-npm run dev
+pnpm dev
 ```
 
+Key additions:
 
+* **`useAnchorDocument.ts`** — React hook that
 
-## 📡 API Routes Overview
+  1. requests the user’s signature (`signTypedData()`),
+  2. posts signature to `/anchor`,
+  3. listens for `DocumentAccepted` event via wagmi.
+* **On‑chain verify widget** — allows anyone to paste a Merkle proof and call the contract.
 
-## POST /documents
-Accepts a PDF file (multipart form)
+---
 
-Extracts page text and hashes each page using SHA-256
+## 📡 API Routes (v2)
 
-Builds a Merkle tree and stores:
+| Route                            | Description                                                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `POST /documents`                | *(unchanged)* Upload PDF → returns `{ document_id, root_hash, n_pages }`.                                    |
+| `POST /documents/:id/anchor`     | Accepts signer wallet address + deadline, returns typed‑data for signature. Backend submits `anchorWithSig`. |
+| `GET /documents/:id/proof/:page` | *(unchanged)* Returns Merkle path.                                                                           |
+| `POST /verify`                   | *(optional)* Off‑chain verification endpoint that mirrors contract logic for convenience.                    |
 
-Root hash in the documents collection
+---
 
-All individual page hashes in the pages collection
+## 🔐 Security Notes
 
-returns 
-```json
-{
-  "document_id": "uuid",
-  "root_hash": "abc123...",
-  "n_pages": 5
-}
-```
+* Nonces in `Verify.sol` prevent replay of old signatures.
+* Backend validates `docs[root] == 0` **before** asking for a signature to avoid wasted gas.
+* SHA‑256 hashing is performed server‑side; if you need client‑side hashing for pure trustlessness, move the wasm build from `sha2` crate into the Next.js bundle.
 
+---
 
-## GET /documents/:id/proof/:page
-Generates a Merkle proof for a specific page
+## 📜 License
 
-Uses page hashes from MongoDB to rebuild the tree
+* Rust/TS code: MIT
+* Solidity contracts: GPL‑3.0
 
-Returns the Merkle proof path
+---
 
-```json
-{
-  "page_index": 2,
-  "page_hash": "hash-of-page-2",
-  "root_hash": "root-hash-of-document",
-  "proof": [["sibling-hash-1", "L"], ["sibling-hash-2", "R"], ...]
-}
-```
-
-## POST /verify
-Accepts:
-    page_hash
-    root_hash
-    proof (from /proof route)
-
-Verifies the page hash leads to the root using the given proof
-
-```json
-{
-  "valid": true
-}
-```
+> Built with 🦀 Rust, ☕ Next.js, and ⛓️ Foundry — because documents deserve cryptographic receipts.

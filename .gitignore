@@ -82,3 +82,53 @@ vendor/
 Thumbs.db
 
 # Git-specific files
+# Compiler files
+cache/
+out/
+
+# Ignores development broadcast logs
+!/broadcast
+/broadcast/*/31337/
+/broadcast/**/dry-run/
+
+# Docs
+docs/
+
+
+#################################
+# Foundry (Solidity)           ##
+#################################
+artifacts/
+out/
+cache/
+broadcast/*/31337/
+broadcast/**/dry-run/
+script/output/
+*.t.sol.json
+
+#################################
+# Rust / Cargo                 ##
+#################################
+target/
+# Keep Cargo.lock for binaries; comment-out if this is a pure library
+# Cargo.lock
+*.rs.bk
+rust-project.json
+**/*.rlib
+.cargo/
+
+#################################
+# Next.js / Node               ##
+#################################
+node_modules/
+.next/
+out/
+dist/
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+bun.lockb
+...
+
