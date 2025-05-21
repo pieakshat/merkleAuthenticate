@@ -1,1 +1,1 @@
-export const VERIFY_ADDRESS = "0x"; 
+export const VERIFY_ADDRESS = "0xd3e7f3a5c9aae8dDb24BA4516a7be43E2A5f7706"; 

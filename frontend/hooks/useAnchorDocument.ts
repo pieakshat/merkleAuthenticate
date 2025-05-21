@@ -25,12 +25,13 @@ export const useAnchorDocument = () => {
     const { signTypedDataAsync } = useSignTypedData();
 
     const anchor = async (rootHash: `0x${string}`) => {
+        console.log("heyy");
         if (!address) throw new Error('wallet not connected');
         // if (nonce == undefined) throw new Error('nonce not loaded');
 
 
         const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
-
+        console.log("sending signature")
         const signature = await signTypedDataAsync({
             primaryType: 'Anchor',
             domain: {
@@ -56,7 +57,7 @@ export const useAnchorDocument = () => {
         });
 
         const { v, r, s } = parseSignature(signature);
-
+        console.log("got signature")
         // send this data to backend 
         await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/documents/anchor`, {
             method: 'POST',
