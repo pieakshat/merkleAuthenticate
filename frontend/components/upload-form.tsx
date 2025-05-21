@@ -8,9 +8,11 @@ import { Upload, FileType, Check, AlertCircle, FileCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { uploadDocument } from "@/lib/api"
+import { useAnchorDocument } from "@/hooks/useAnchorDocument"
 
 export default function UploadForm() {
   const router = useRouter()
+  const { anchor } = useAnchorDocument();
   const [file, setFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadResult, setUploadResult] = useState<any>(null)
@@ -41,8 +43,9 @@ export default function UploadForm() {
 
     try {
       const result = await uploadDocument(file)
+      await anchor(result.root_hash);
       console.log(result);
-      setUploadResult(result)
+      setUploadResult(result);
     } catch (err: any) {
       setError(err.message || "Failed to upload document")
     } finally {

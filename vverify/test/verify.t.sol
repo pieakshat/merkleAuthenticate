@@ -36,7 +36,6 @@ contract TestDocument is Test {
 
         // bytes32 domainSeparator = verify.exposedDomainSeparator();
 
-
         bytes32 structHash = keccak256(
             abi.encode(
                 ANCHOR_TYPEHASH,

@@ -1,0 +1,1 @@
+export const VERIFY_ADDRESS = "0x"; 
