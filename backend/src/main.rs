@@ -6,7 +6,7 @@ mod merkle;
 mod utils;
 
 use actix_cors::Cors;
-use actix_web::{web, App, HttpServer, Responder, HttpResponse};
+use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use dotenvy::dotenv;
 use mongodb::bson::doc;
 use std::env;

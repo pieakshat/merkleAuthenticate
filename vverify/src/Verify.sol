@@ -4,7 +4,6 @@ pragma solidity ^0.8;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {EIP712}  from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ECDSA}  from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {console} from "forge-std/console.sol";
 
 
 contract Verify is Ownable, EIP712 {
@@ -16,10 +15,14 @@ contract Verify is Ownable, EIP712 {
 
     event DocumentAccepted(bytes document, address owner);
 
-    constructor() EIP712("DocAnchor", "1") Ownable(msg.sender){}
+bytes32 private immutable _TYPE_HASH;
 
-    bytes32 private constant _TYPE_HASH = keccak256("Anchor(bytes32 root, address owner, uint256 nonce, uint256 deadline)"
-    ); 
+constructor() EIP712("DocAnchor", "1") Ownable(msg.sender) {
+    _TYPE_HASH = keccak256(
+        "Anchor(bytes32 root,address owner,uint256 nonce,uint256 deadline)"
+    );
+}
+
 
     function _hash(bytes32 a, bytes32 b) private pure returns (bytes32) {
         return keccak256(abi.encodePacked(a, b)); 
@@ -51,12 +54,10 @@ contract Verify is Ownable, EIP712 {
             deadline
         ));
 
-        console.log("verify structHash: ");
-        console.logBytes32(structHash);
+        
 
         bytes32 digest = _hashTypedDataV4(structHash);
-        console.log("verify digest: ");
-        console.logBytes32(digest);
+        
 
         address signer = ECDSA.recover(digest, v, r, s);
         require(signer == docOwner, "Invalid signature"); 

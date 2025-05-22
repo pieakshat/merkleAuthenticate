@@ -10,7 +10,7 @@ import { VERIFY_ADDRESS } from '@/config/addresses';
 
 export const useAnchorDocument = () => {
     const { chain, address } = useAccount();
-
+    // console.log("signing message on contract: ", VERIFY_ADDRESS);
     // 
     const { data } = useReadContract({
         abi: VerifyAbi,
@@ -25,13 +25,11 @@ export const useAnchorDocument = () => {
     const { signTypedDataAsync } = useSignTypedData();
 
     const anchor = async (rootHash: `0x${string}`) => {
-        console.log("heyy");
         if (!address) throw new Error('wallet not connected');
         // if (nonce == undefined) throw new Error('nonce not loaded');
-
-
+        console.log("nonce: ", nonce.toString());
         const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
-        console.log("sending signature")
+        console.log("deadline: ", deadline.toString());
         const signature = await signTypedDataAsync({
             primaryType: 'Anchor',
             domain: {
@@ -55,21 +53,33 @@ export const useAnchorDocument = () => {
                 deadline,
             },
         });
-
+        console.log("signature: ", signature);
         const { v, r, s } = parseSignature(signature);
-        console.log("got signature")
+        console.log("signature parsed: ", { v, r, s });
         // send this data to backend 
-        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/documents/anchor`, {
+        const payload = {
+            root: rootHash,
+            owner: address,
+            deadline: deadline.toString(),   // string OK
+            v: Number(v),                   // 27 or 28
+            r,
+            s,
+        };
+
+
+        await fetch('http://localhost:8081/anchor', {
             method: 'POST',
-            headers: { 'Content-type': 'application/json' },
-            body: JSON.stringify({
-                root: rootHash,
-                owner: address,
-                nonce: nonce?.toString(),
-                deadline: deadline.toString(),
-                v, r, s,
-            }),
-        });
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        })
+            .then(async (res) => {
+                if (!res.ok) throw new Error(await res.text());
+                return res.json();
+            })
+            .then((json) => console.log('✅ anchored tx', json.tx))
+            .catch((err) => {
+                console.error('Anchor failed:', err);
+            });
     }
 
     return { anchor };

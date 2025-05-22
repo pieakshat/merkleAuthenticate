@@ -43,9 +43,8 @@ export default function UploadForm() {
 
     try {
       const result = await uploadDocument(file)
-      console.log(result);
-      console.log(result.root_hash.length);
       await anchor(`0x${result.root_hash}`);
+      console.log(result);
       setUploadResult(result);
     } catch (err: any) {
       setError(err.message || "Failed to upload document")

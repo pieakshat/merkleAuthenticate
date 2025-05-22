@@ -24,4 +24,11 @@ tempfile    = "3"
 actix-cors = "0.6"
 
 
+ethers            = { version = "2", default-features = false, features = ["abigen"] }
+ethers-contract   = { version = "2", default-features = false }
+ethers-providers  = { version = "2", default-features = false, features = ["rustls"] }
+ethers-signers    = { version = "2", default-features = false }
+ethers-middleware = { version = "2", default-features = false }
+
+
 
